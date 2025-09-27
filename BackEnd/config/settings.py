@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'corsheaders',
     'accounts',
-
+    'chat_module',
     'drf_spectacular'
 ]
 
