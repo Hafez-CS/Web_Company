@@ -42,8 +42,21 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'chat_module',
+    'groups_module',
+    'tasks_module',
+    'tickets_module',
+    'transactions_module',
+    'reports_module',
+    'assistant_module',
     'drf_spectacular'
 ]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# File upload settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 
 CORS_ORIGIN_ALLOW_ALL = True
 

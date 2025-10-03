@@ -6,6 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from django.contrib.auth import authenticate
 from .models import UserProfile
 from .serializers import UserSerializer, RegisterSerializer
+from groups_module.models import GroupMembership
 
 
 class LoginView(APIView):
@@ -127,3 +128,61 @@ class LogoutView(APIView):
             return Response({"detail": "توکن نامعتبر است یا قبلاً بلاک شده است."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"detail": f"خطا: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class ChangeTeamAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def post(self, request):
+        user = request.user
+        new_group_id = request.data.get('group_id')
+        
+        if not new_group_id:
+            return Response({
+                'success': False,
+                'detail': 'Group ID is required.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Deactivate current memberships
+        GroupMembership.objects.filter(user=user, is_active=True).update(is_active=False)
+        
+        # Activate new membership
+        try:
+            membership = GroupMembership.objects.get(user=user, group_id=new_group_id)
+            membership.is_active = True
+            membership.save()
+            
+            return Response({
+                'success': True,
+                'message': 'Team changed successfully.'
+            })
+        except GroupMembership.DoesNotExist:
+            return Response({
+                'success': False,
+                'detail': 'You are not a member of this group.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+class UserSettingsAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get(self, request):
+        user = request.user
+        current_memberships = GroupMembership.objects.filter(user=user, is_active=True)
+        
+        groups = [{
+            'id': m.group.id,
+            'name': m.group.name,
+            'role': m.role
+        } for m in current_memberships]
+        
+        return Response({
+            'success': True,
+            'data': {
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'is_staff': user.is_staff
+                },
+                'groups': groups
+            }
+        })
